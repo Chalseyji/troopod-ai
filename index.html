@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Troopod – AI Landing Page Personalizer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0f0f0f;
+            color: #f0f0f0;
+            min-height: 100vh;
+        }
+        .header {
+            padding: 24px 40px;
+            border-bottom: 1px solid #222;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+        }
+        .header span {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .container {
+            max-width: 860px;
+            margin: 48px auto;
+            padding: 0 24px;
+        }
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 16px;
+            padding: 36px;
+        }
+        .card h2 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        .card p {
+            color: #888;
+            margin-bottom: 32px;
+            font-size: 15px;
+        }
+        .form-group {
+            margin-bottom: 24px;
+        }
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #aaa;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        input[type="text"], input[type="url"] {
+            width: 100%;
+            padding: 14px 16px;
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+            transition: border 0.2s;
+        }
+        input:focus { border-color: #667eea; }
+        .upload-area {
+            border: 2px dashed #333;
+            border-radius: 10px;
+            padding: 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: border 0.2s;
+        }
+        .upload-area:hover { border-color: #667eea; }
+        .upload-area input { display: none; }
+        .upload-area p { color: #666; font-size: 14px; }
+        .upload-area .icon { font-size: 32px; margin-bottom: 8px; }
+        .divider {
+            text-align: center;
+            color: #444;
+            margin: 16px 0;
+            font-size: 13px;
+        }
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin-top: 8px;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .status {
+            margin-top: 24px;
+            padding: 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            display: none;
+        }
+        .status.loading {
+            background: #1e1e2e;
+            border: 1px solid #667eea;
+            color: #667eea;
+            display: block;
+        }
+        .status.error {
+            background: #2e1e1e;
+            border: 1px solid #e06c75;
+            color: #e06c75;
+            display: block;
+        }
+        .results { margin-top: 40px; display: none; }
+        .results.show { display: block; }
+        .results h3 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+        .analysis-box {
+            background: #111;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #ccc;
+            white-space: pre-wrap;
+        }
+        .changes-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .change-item {
+            background: #111;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            padding: 16px;
+        }
+        .change-item .change-label {
+            font-size: 11px;
+            color: #667eea;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+        .change-item .change-value {
+            font-size: 14px;
+            color: #fff;
+        }
+        .preview-section { margin-top: 24px; }
+        .preview-section h3 {
+            font-size: 20px;
+            margin-bottom: 16px;
+        }
+        .preview-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .tab {
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid #333;
+            background: transparent;
+            color: #888;
+            transition: all 0.2s;
+        }
+        .tab.active {
+            background: #667eea;
+            border-color: #667eea;
+            color: #fff;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            background: #fff;
+        }
+        .file-selected {
+            color: #667eea;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Troopod</h1>
+        <span>AI Personalizer</span>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>Personalize Your Landing Page</h2>
+            <p>Upload your ad creative and enter your landing page URL to get an AI-personalized version.</p>
+
+            <div class="form-group">
+                <label>Landing Page URL *</label>
+                <input type="url" id="landingUrl" placeholder="https://yoursite.com/landing-page" />
+            </div>
+
+            <div class="form-group">
+                <label>Ad Creative – Upload Image</label>
+                <div class="upload-area" onclick="document.getElementById('adImage').click()">
+                    <input type="file" id="adImage" accept="image/*" onchange="handleFileSelect(this)">
+                    <div class="icon">🖼️</div>
+                    <p>Click to upload your ad image (JPG, PNG, GIF)</p>
+                </div>
+                <div id="fileSelected" class="file-selected"></div>
+            </div>
+
+            <div class="divider">— or —</div>
+
+            <div class="form-group">
+                <label>Ad Creative – Paste URL</label>
+                <input type="url" id="adUrl" placeholder="https://example.com/my-ad-image.jpg" />
+            </div>
+
+            <button class="btn" id="submitBtn" onclick="analyze()">
+                ✨ Generate Personalized Page
+            </button>
+
+            <div class="status" id="status"></div>
+        </div>
+
+        <div class="results" id="results">
+            <h3>📊 Ad Analysis</h3>
+            <div class="analysis-box" id="adAnalysis"></div>
+
+            <h3>✏️ Changes Made</h3>
+            <div class="changes-grid" id="changesGrid"></div>
+
+            <div class="preview-section">
+                <h3>👁️ Page Preview</h3>
+                <div class="preview-tabs">
+                    <button class="tab active" onclick="showTab('modified')">Modified Page</button>
+                    <button class="tab" onclick="showTab('original')">Original Page</button>
+                </div>
+                <iframe id="modifiedFrame" src=""></iframe>
+                <iframe id="originalFrame" style="display:none;" src=""></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let modifiedHTML = "";
+        let originalURL = "";
+
+        function handleFileSelect(input) {
+            if (input.files && input.files[0]) {
+                document.getElementById("fileSelected").textContent = "✓ Selected: " + input.files[0].name;
+            }
+        }
+
+        function showTab(tab) {
+            document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+            if (tab === "modified") {
+                document.querySelectorAll(".tab")[0].classList.add("active");
+                document.getElementById("modifiedFrame").style.display = "block";
+                document.getElementById("originalFrame").style.display = "none";
+            } else {
+                document.querySelectorAll(".tab")[1].classList.add("active");
+                document.getElementById("modifiedFrame").style.display = "none";
+                document.getElementById("originalFrame").style.display = "block";
+                document.getElementById("originalFrame").src = originalURL;
+            }
+        }
+
+        async function analyze() {
+            const landingUrl = document.getElementById("landingUrl").value.trim();
+            const adUrl = document.getElementById("adUrl").value.trim();
+            const adImage = document.getElementById("adImage").files[0];
+            const btn = document.getElementById("submitBtn");
+            const status = document.getElementById("status");
+
+            if (!landingUrl) {
+                status.className = "status error";
+                status.textContent = "Please enter a landing page URL.";
+                return;
+            }
+            if (!adImage && !adUrl) {
+                status.className = "status error";
+                status.textContent = "Please upload an ad image or paste an ad URL.";
+                return;
+            }
+
+            btn.disabled = true;
+            status.className = "status loading";
+            status.textContent = "⏳ Analyzing your ad and personalizing the landing page...";
+            document.getElementById("results").classList.remove("show");
+
+            const formData = new FormData();
+            formData.append("landing_url", landingUrl);
+            if (adImage) formData.append("ad_image", adImage);
+            if (adUrl) formData.append("ad_url", adUrl);
+
+            try {
+                const response = await fetch("/analyze", {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.error) {
+                    status.className = "status error";
+                    status.textContent = "Error: " + data.error;
+                    btn.disabled = false;
+                    return;
+                }
+
+                // Show results
+                status.style.display = "none";
+                originalURL = landingUrl;
+                modifiedHTML = data.modified_html;
+
+                document.getElementById("adAnalysis").textContent = data.ad_analysis;
+
+                // Show changes grid
+                const changes = data.changes || {};
+                const grid = document.getElementById("changesGrid");
+                grid.innerHTML = "";
+                const labels = { title: "Page Title", h1: "Main Headline", h2: "Sub Headline", cta: "CTA Button", hero_description: "Hero Description" };
+                Object.entries(labels).forEach(([key, label]) => {
+                    if (changes[key]) {
+                        grid.innerHTML += `
+                            <div class="change-item">
+                                <div class="change-label">${label}</div>
+                                <div class="change-value">${changes[key]}</div>
+                            </div>`;
+                    }
+                });
+
+                // Load modified page in iframe
+                const blob = new Blob([modifiedHTML], { type: "text/html" });
+                const blobUrl = URL.createObjectURL(blob);
+                document.getElementById("modifiedFrame").src = blobUrl;
+
+                document.getElementById("results").classList.add("show");
+                btn.disabled = false;
+
+            } catch (err) {
+                status.className = "status error";
+                status.textContent = "Something went wrong. Make sure the backend is running.";
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
