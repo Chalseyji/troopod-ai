@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-import google.generativeai as genai
+from google import genai
 import requests
 from bs4 import BeautifulSoup
 import os
@@ -12,8 +12,7 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel("gemini-1.5-flash")
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 def scrape_landing_page(url):
     try:
