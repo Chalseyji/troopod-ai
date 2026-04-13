@@ -1,5 +1,7 @@
 flask
 requests
 flask-cors
-google-generativeai
+google-genai
 beautifulsoup4
+python-dotenv
+gunicorn
