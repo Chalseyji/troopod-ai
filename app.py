@@ -5,6 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 import os
 import base64
+import json
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -35,10 +36,18 @@ Return as a structured summary."""
 
     try:
         if image_data:
-            image_parts = [{"mime_type": "image/jpeg", "data": image_data}]
-            response = model.generate_content([prompt, image_parts[0]])
+            response = client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=[
+                    prompt,
+                    {"inline_data": {"mime_type": "image/jpeg", "data": image_data}}
+                ]
+            )
         else:
-            response = model.generate_content(f"{prompt}\nAd URL: {ad_url}")
+            response = client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=f"{prompt}\nAd URL: {ad_url}"
+            )
         return response.text
     except Exception as e:
         return f"Error analyzing ad: {str(e)}"
@@ -46,11 +55,9 @@ Return as a structured summary."""
 def personalize_page(html_content, ad_analysis):
     soup = BeautifulSoup(html_content, "html.parser")
 
-    # Extract text elements to rewrite
     title = soup.find("title")
     h1_tags = soup.find_all("h1")
     h2_tags = soup.find_all("h2")
-    cta_buttons = soup.find_all("button") + soup.find_all("a", class_=lambda x: x and "btn" in x.lower())
 
     original_title = title.string if title else ""
     original_h1 = h1_tags[0].get_text() if h1_tags else ""
@@ -61,7 +68,7 @@ def personalize_page(html_content, ad_analysis):
 Based on this ad analysis:
 {ad_analysis}
 
-Rewrite these landing page elements to match the ad's message and improve conversion:
+Rewrite these landing page elements to match the ad message and improve conversion:
 
 1. Page title (currently: "{original_title}")
 2. Main headline H1 (currently: "{original_h1}")
@@ -72,39 +79,38 @@ Rewrite these landing page elements to match the ad's message and improve conver
 Rules:
 - Keep the same tone as the ad
 - Be specific, not generic
-- Don't change the page structure, only the copy
-- Return ONLY a JSON object with keys: title, h1, h2, cta, hero_description"""
+- Do not change the page structure, only the copy
+- Return ONLY a valid JSON object with keys: title, h1, h2, cta, hero_description
+- No markdown, no backticks, just raw JSON"""
 
     try:
-        response = model.generate_content(prompt)
-        import json
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=prompt
+        )
         text = response.text.strip()
         text = text.replace("```json", "").replace("```", "").strip()
         return json.loads(text)
     except Exception as e:
         return None
 
-def inject_changes(html_content, changes, ad_analysis):
+def inject_changes(html_content, changes):
     if not changes:
         return html_content
 
     soup = BeautifulSoup(html_content, "html.parser")
 
-    # Update title
     if soup.find("title") and changes.get("title"):
         soup.find("title").string = changes["title"]
 
-    # Update H1
     h1_tags = soup.find_all("h1")
     if h1_tags and changes.get("h1"):
         h1_tags[0].string = changes["h1"]
 
-    # Update H2
     h2_tags = soup.find_all("h2")
     if h2_tags and changes.get("h2"):
         h2_tags[0].string = changes["h2"]
 
-    # Inject personalization banner at top of body
     if soup.body and changes.get("hero_description"):
         banner = soup.new_tag("div")
         banner["style"] = """
@@ -137,7 +143,6 @@ def analyze():
         if not landing_url:
             return jsonify({"error": "Landing page URL is required"}), 400
 
-        # Step 1: Analyze the ad
         image_data = None
         if ad_image:
             image_data = base64.b64encode(ad_image.read()).decode("utf-8")
@@ -145,16 +150,12 @@ def analyze():
         else:
             ad_analysis = analyze_ad(ad_url=ad_url)
 
-        # Step 2: Scrape landing page
         html_content = scrape_landing_page(landing_url)
         if not html_content:
             return jsonify({"error": "Could not fetch landing page"}), 400
 
-        # Step 3: Generate personalized copy
         changes = personalize_page(html_content, ad_analysis)
-
-        # Step 4: Inject changes into HTML
-        modified_html = inject_changes(html_content, changes, ad_analysis)
+        modified_html = inject_changes(html_content, changes)
 
         return jsonify({
             "success": True,
@@ -167,4 +168,5 @@ def analyze():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
