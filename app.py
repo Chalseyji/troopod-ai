@@ -37,7 +37,7 @@ Return as a structured summary."""
     try:
         if image_data:
             response = client.models.generate_content(
-                model="gemini-2.0-flash",
+                model="gemini-1.5-flash-8b",
                 contents=[
                     prompt,
                     {"inline_data": {"mime_type": "image/jpeg", "data": image_data}}
@@ -45,7 +45,7 @@ Return as a structured summary."""
             )
         else:
             response = client.models.generate_content(
-                model="gemini-2.0-flash",
+                model="gemini-1.5-flash-8b",
                 contents=f"{prompt}\nAd URL: {ad_url}"
             )
         return response.text
@@ -85,7 +85,7 @@ Rules:
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-1.5-flash-8b",
             contents=prompt
         )
         text = response.text.strip()
